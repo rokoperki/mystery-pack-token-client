@@ -1,9 +1,11 @@
-'use client';
+"use client";
 
-import { formatSol, formatAddress } from '@/lib/utils';
-import type { Campaign } from '@/types';
-import { Card, CardHeader, CardContent } from '../ui/card';
-import { BuyPackButton } from '../packs/buy-pack-button';
+import { useWallet } from "@solana/wallet-adapter-react";
+import { formatSol, formatAddress } from "@/lib/utils";
+import type { Campaign } from "@/types";
+import { Card, CardHeader, CardContent } from "../ui/card";
+import { BuyPackButton } from "../packs/buy-pack-button";
+import Link from "next/link";
 
 interface CampaignDetailsProps {
   campaign: Campaign;
@@ -11,7 +13,9 @@ interface CampaignDetailsProps {
 }
 
 export function CampaignDetails({ campaign, packsSold }: CampaignDetailsProps) {
+  const { publicKey } = useWallet();
   const packsRemaining = campaign.totalPacks - packsSold;
+  const isAuthority = publicKey?.toBase58() === campaign.authority;
 
   return (
     <Card>
@@ -51,9 +55,9 @@ export function CampaignDetails({ campaign, packsSold }: CampaignDetailsProps) {
             <span className="text-zinc-500">Status</span>
             <span
               className={`px-2 py-0.5 text-xs rounded-full ${
-                campaign.status === 'ACTIVE'
-                  ? 'bg-green-500/20 text-green-400'
-                  : 'bg-zinc-500/20 text-zinc-400'
+                campaign.status === "ACTIVE"
+                  ? "bg-green-500/20 text-green-400"
+                  : "bg-zinc-500/20 text-zinc-400"
               }`}
             >
               {campaign.status}
@@ -77,13 +81,37 @@ export function CampaignDetails({ campaign, packsSold }: CampaignDetailsProps) {
           </div>
         </div>
 
-        {campaign.status === 'ACTIVE' && campaign.publicKey && packsRemaining > 0 && (
-          <BuyPackButton
-            campaignPda={campaign.publicKey}
-            packsSold={packsSold}
-            price={campaign.packPrice}
-          />
+        {/* Links */}
+        {campaign.status === "ACTIVE" && (
+          <div className="flex gap-4 pt-4 border-t border-zinc-800">
+            <Link
+              href={`/campaigns/${campaign.id}/history`}
+              className="text-sm text-zinc-400 hover:text-white transition-colors"
+            >
+              📋 Pack History
+            </Link>
+
+            {isAuthority && (
+              <Link
+                href={`/campaigns/${campaign.id}/analytics`}
+                className="text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                📊 Analytics
+              </Link>
+            )}
+          </div>
         )}
+
+        {/* Buy Button */}
+        {campaign.status === "ACTIVE" &&
+          campaign.publicKey &&
+          packsRemaining > 0 && (
+            <BuyPackButton
+              campaignPda={campaign.publicKey}
+              packsSold={packsSold}
+              price={campaign.packPrice}
+            />
+          )}
 
         {packsRemaining === 0 && (
           <div className="text-center py-4 text-zinc-500">Sold Out</div>

@@ -1,16 +1,17 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+// hooks/useClaimPack.ts
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
 import {
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
-} from '@solana/spl-token';
-import { BN } from '@coral-xyz/anchor';
-import { useProgram } from './useProgram';
-import { campaignApi } from '@/lib/api';
-import { getReceiptPda } from '@/lib/program';
-import { queryKeys } from '@/lib/query-keys';
+} from "@solana/spl-token";
+import { BN } from "@coral-xyz/anchor";
+import { useProgram } from "./useProgram";
+import { campaignApi } from "@/lib/api";
+import { getReceiptPda } from "@/lib/program";
+import { queryKeys } from "@/lib/query-keys";
 
 interface ClaimPackParams {
   campaignId: string;
@@ -25,27 +26,28 @@ export function useClaimPack() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ campaignId, campaignPda, tokenMint, packIndex }: ClaimPackParams) => {
+    mutationFn: async ({
+      campaignId,
+      campaignPda,
+      tokenMint,
+      packIndex,
+    }: ClaimPackParams) => {
       if (!publicKey || !program) {
-        throw new Error('Wallet not connected');
+        throw new Error("Wallet not connected");
       }
 
-      // 1. Get reveal data
-      const { tokenAmount, salt, proof } = await campaignApi.reveal(
+      // 1. Get reveal data (now includes tier)
+      const { tokenAmount, salt, proof, tier } = await campaignApi.reveal(
         campaignId,
         packIndex,
         publicKey.toBase58()
       );
-
-
 
       // 2. Derive accounts
       const campaign = new PublicKey(campaignPda);
       const mint = new PublicKey(tokenMint);
       const receiptPda = getReceiptPda(campaign, packIndex);
       const buyerAta = getAssociatedTokenAddressSync(mint, publicKey);
-
-      console.log(campaign.toBase58(), receiptPda.toBase58(), buyerAta.toBase58());
 
       // 3. Send claim transaction
       const signature = await program.methods
@@ -62,11 +64,13 @@ export function useClaimPack() {
         })
         .rpc();
 
-      return { signature, tokenAmount };
+      return { signature, tokenAmount, tier };
     },
     onSuccess: () => {
       if (publicKey) {
-        queryClient.invalidateQueries({ queryKey: queryKeys.packs.user(publicKey.toBase58()) });
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.packs.user(publicKey.toBase58()),
+        });
       }
     },
   });

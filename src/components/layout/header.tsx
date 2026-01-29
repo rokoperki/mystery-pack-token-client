@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletButton } from '@/components/wallet/wallet-button';
+import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletButton } from "@/components/wallet/wallet-button";
+import { useCampaigns } from "@/hooks/useCampaigns";
 
 export function Header() {
   const { publicKey } = useWallet();
+  const { data: campaigns } = useCampaigns();
+
+  const hasCampaigns =
+    campaigns?.map((c) => c.authority).includes(publicKey?.toBase58() || "") ||
+    false;
 
   return (
     <header className="border-b border-zinc-800 bg-zinc-950">
@@ -37,6 +43,16 @@ export function Header() {
                 </Link>
               </>
             )}
+            {
+                publicKey && hasCampaigns && (
+                    <Link
+                    href="/my-campaigns"
+                    className="text-zinc-400 hover:text-white transition-colors"
+                    >
+                    My Campaigns
+                    </Link>
+                )
+            }
           </nav>
         </div>
         <WalletButton />

@@ -50,3 +50,11 @@ export interface PrepareRequest {
   tiers: Tier[];
   seed: string; // Required
 }
+
+// types/index.ts
+export interface RevealResponse {
+    tokenAmount: string;
+    salt: number[];
+    proof: number[][];
+    tier: string; // Add tier
+  }

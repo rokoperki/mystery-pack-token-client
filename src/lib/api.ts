@@ -22,10 +22,20 @@ export const campaignApi = {
     return res.data;
   },
 
+  getHistory: async (id: string) => {
+    const res = await api.get(`/campaigns/${id}/history`);
+    return res.data;
+  },
+
   confirm: async (id: string, signature: string) => {
     const res = await api.post<ConfirmResponse>(`/campaigns/${id}/confirm`, {
       signature,
     });
+    return res.data;
+  },
+
+  getAnalytics: async (id: string) => {
+    const res = await api.get(`/campaigns/${id}/analytics`);
     return res.data;
   },
 

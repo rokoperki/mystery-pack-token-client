@@ -1,14 +1,15 @@
-'use client';
+// components/packs/claim-pack-button.tsx
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { useClaimPack } from '@/hooks/useClaimPack';
+import { Button } from "@/components/ui/button";
+import { useClaimPack } from "@/hooks/useClaimPack";
 
 interface ClaimPackButtonProps {
   campaignId: string;
   campaignPda: string;
   tokenMint: string;
   packIndex: number;
-  onSuccess?: (amount: string) => void;
+  onSuccess?: (amount: string, tier?: string) => void;
 }
 
 export function ClaimPackButton({
@@ -24,19 +25,15 @@ export function ClaimPackButton({
     claimPack(
       { campaignId, campaignPda, tokenMint, packIndex },
       {
-        onSuccess: ({ tokenAmount }) => {
-          onSuccess?.(tokenAmount);
+        onSuccess: ({ tokenAmount, tier }) => {
+          onSuccess?.(tokenAmount, tier);
         },
       }
     );
   };
 
   return (
-    <Button
-      className="w-full"
-      onClick={handleClaim}
-      loading={isPending}
-    >
+    <Button className="w-full" onClick={handleClaim} loading={isPending}>
       Open Pack
     </Button>
   );
