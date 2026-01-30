@@ -1,15 +1,16 @@
 // app/campaigns/[id]/analytics/page.tsx
-'use client';
+"use client";
 
-import { useParams } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { campaignApi } from '@/lib/api';
-import { useCampaign } from '@/hooks/useCampaign';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
-import { TierBadge } from '@/components/ui/tier-badge';
-import { formatSol, formatTokens } from '@/lib/utils';
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { campaignApi } from "@/lib/api";
+import { useCampaign } from "@/hooks/useCampaign";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
+import { TierBadge } from "@/components/ui/tier-badge";
+import { formatSol, formatTokens } from "@/lib/utils";
+import { WithdrawButton } from "@/components/campaigns/withdraw-button";
 
 interface Analytics {
   campaignId: string;
@@ -36,19 +37,20 @@ export default function AnalyticsPage() {
   const { data: campaign } = useCampaign(id);
 
   const { data: analytics, isLoading } = useQuery({
-    queryKey: ['campaign-analytics', id],
+    queryKey: ["campaign-analytics", id],
     queryFn: () => campaignApi.getAnalytics(id),
     enabled: !!campaign,
   });
 
-  // Check if user is campaign authority
   const isAuthority = publicKey?.toBase58() === campaign?.authority;
 
   if (!isAuthority) {
     return (
       <div className="text-center py-20">
         <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-        <p className="text-zinc-500">Only the campaign creator can view analytics</p>
+        <p className="text-zinc-500">
+          Only the campaign creator can view analytics
+        </p>
       </div>
     );
   }
@@ -71,9 +73,9 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <p className="text-zinc-500 text-sm">SOL Collected</p>
+            <p className="text-zinc-500 text-sm">Total sold ammount </p>
             <p className="text-2xl font-bold text-green-400">
-              {formatSol(data.overview.solCollected)}
+              {formatSol(data?.overview.solCollected)}
             </p>
           </CardContent>
         </Card>
@@ -82,7 +84,7 @@ export default function AnalyticsPage() {
           <CardContent className="p-4 text-center">
             <p className="text-zinc-500 text-sm">Packs Sold</p>
             <p className="text-2xl font-bold">
-              {data.overview.packsSold} / {data.overview.totalPacks}
+              {data?.overview.packsSold} / {data?.overview.totalPacks}
             </p>
           </CardContent>
         </Card>
@@ -90,18 +92,14 @@ export default function AnalyticsPage() {
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-zinc-500 text-sm">Packs Claimed</p>
-            <p className="text-2xl font-bold">
-              {data.overview.packsClaimed}
-            </p>
+            <p className="text-2xl font-bold">{data?.overview.packsClaimed}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-zinc-500 text-sm">Claim Rate</p>
-            <p className="text-2xl font-bold">
-              {data.overview.claimRate}%
-            </p>
+            <p className="text-2xl font-bold">{data?.overview.claimRate}%</p>
           </CardContent>
         </Card>
       </div>
@@ -114,17 +112,19 @@ export default function AnalyticsPage() {
         <CardContent className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-zinc-400">
-              {data.overview.packsSold} sold
+              {data?.overview.packsSold} sold
             </span>
             <span className="text-zinc-400">
-              {data.overview.packsRemaining} remaining
+              {data?.overview.packsRemaining} remaining
             </span>
           </div>
           <div className="h-4 bg-zinc-800 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all"
+              className="h-full bg-linear-to-r from-purple-500 to-pink-500 transition-all"
               style={{
-                width: `${(data.overview.packsSold / data.overview.totalPacks) * 100}%`,
+                width: `${
+                  (data?.overview.packsSold / data?.overview.totalPacks) * 100
+                }%`,
               }}
             />
           </div>
@@ -150,7 +150,7 @@ export default function AnalyticsPage() {
                     <p className="text-zinc-500">{tier.claimedPacks} claimed</p>
                   </div>
                 </div>
-                
+
                 <div className="text-right">
                   <p className="text-white font-medium">
                     {formatTokens(tier.tokensDistributed)}
@@ -162,6 +162,14 @@ export default function AnalyticsPage() {
           </div>
         </CardContent>
       </Card>
+      <div className="grid grid-cols-2 gap-4">
+        {campaign?.publicKey && (
+          <WithdrawButton
+            campaignPda={campaign.publicKey}
+            authority={campaign.authority}
+          />
+        )}
+      </div>
     </div>
   );
 }

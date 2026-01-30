@@ -1,16 +1,15 @@
-'use client';
+"use client";
 
-import { useWallet } from '@solana/wallet-adapter-react';
-import { useUserPacks } from '@/hooks/useUserPacks';
-import { useCampaigns } from '@/hooks/useCampaigns';
-import { PackCard } from '@/components/packs/pack-card';
-import { Spinner } from '@/components/ui/spinner';
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useUserPacks } from "@/hooks/useUserPacks";
+import { useCampaigns } from "@/hooks/useCampaigns";
+import { PackCard } from "@/components/packs/pack-card";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function MyPacksPage() {
   const { publicKey } = useWallet();
   const { data: packs, isLoading: packsLoading } = useUserPacks();
   const { data: campaigns, isLoading: campaignsLoading } = useCampaigns();
-
 
   if (!publicKey) {
     return (
@@ -43,11 +42,7 @@ export default function MyPacksPage() {
   }
 
   // Map campaign publicKey to campaign data
-  const campaignMap = new Map(
-    campaigns?.map((c) => [c.publicKey, c]) || []
-  );
-
-  console.log(packs);
+  const campaignMap = new Map(campaigns?.map((c) => [c.publicKey, c]) || []);
 
   return (
     <div className="space-y-8">

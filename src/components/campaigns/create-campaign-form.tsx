@@ -1,3 +1,4 @@
+// components/campaigns/create-campaign-form.tsx
 "use client";
 
 import { useState } from "react";
@@ -12,12 +13,14 @@ import {
   TOKEN_PROGRAM_ID,
   getMinimumBalanceForRentExemptMint,
 } from "@solana/spl-token";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "../ui/card";
 import { TierInput } from "./tier-input";
 import { useCreateCampaign } from "@/hooks/useCreateCampaign";
 import { getCampaignPda } from "@/lib/program";
+import { getErrorMessage } from "@/lib/errors";
 import type { Tier } from "@/types";
 
 const DEFAULT_TIERS: Tier[] = [
@@ -37,8 +40,7 @@ export function CreateCampaignForm() {
   const [totalPacks, setTotalPacks] = useState("100");
   const [packPrice, setPackPrice] = useState("0.1");
   const [tiers, setTiers] = useState<Tier[]>(DEFAULT_TIERS);
-  const [error, setError] = useState("");
-  const [step, setStep] = useState<"form" | "creating">("form");
+  const [isCreatingToken, setIsCreatingToken] = useState(false);
 
   const handleAddTier = () => {
     setTiers([...tiers, { name: "", chance: 0, min: 0, max: 0 }]);
@@ -54,7 +56,7 @@ export function CreateCampaignForm() {
     setTiers(newTiers);
   };
 
-  const validateTiers = () => {
+  const validateTiers = (): string | null => {
     const totalChance = tiers.reduce((sum, t) => sum + t.chance, 0);
     if (Math.abs(totalChance - 1) > 0.001) {
       return "Tier chances must sum to 100%";
@@ -66,23 +68,22 @@ export function CreateCampaignForm() {
     return null;
   };
 
-  // In CreateCampaignForm - handleSubmit
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     if (!publicKey) {
-      setError("Please connect your wallet");
+      toast.error("Please connect your wallet");
       return;
     }
 
     const tierError = validateTiers();
     if (tierError) {
-      setError(tierError);
+      toast.error(tierError);
       return;
     }
 
-    setStep("creating");
+    setIsCreatingToken(true);
+    const toastId = toast.loading("Creating token mint...");
 
     try {
       // Generate seed ONCE
@@ -96,7 +97,7 @@ export function CreateCampaignForm() {
       // Get rent exemption
       const lamports = await getMinimumBalanceForRentExemptMint(connection);
 
-      // Build transaction to create mint with campaign PDA as authority
+      // Build transaction
       const transaction = new Transaction().add(
         SystemProgram.createAccount({
           fromPubkey: publicKey,
@@ -116,47 +117,52 @@ export function CreateCampaignForm() {
           mintKeypair.publicKey,
           publicKey,
           AuthorityType.MintTokens,
-          campaignPda, // This must match the campaign PDA
+          campaignPda,
           [],
           TOKEN_PROGRAM_ID
         )
       );
 
+      toast.loading("Waiting for approval...", { id: toastId });
+
       const signature = await sendTransaction(transaction, connection, {
         signers: [mintKeypair],
       });
 
+      toast.loading("Confirming token creation...", { id: toastId });
+
       await connection.confirmTransaction(signature, "confirmed");
+
+      toast.success("Token created!", { id: toastId });
 
       const priceInLamports = Math.floor(parseFloat(packPrice) * 1e9);
 
-      // Pass the SAME seed to createCampaign
+      // Create campaign
       createCampaign(
         {
           tokenMint: mintKeypair.publicKey.toBase58(),
           totalPacks: parseInt(totalPacks),
           packPrice: priceInLamports,
           tiers,
-          seed: seed.toString(), // IMPORTANT: same seed!
+          seed: seed.toString(),
         },
         {
           onSuccess: ({ id }) => {
             router.push(`/campaigns/${id}`);
           },
-          onError: (err) => {
-            setError(err.message);
-            setStep("form");
+          onError: () => {
+            setIsCreatingToken(false);
           },
         }
       );
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      setError(err.message || "Failed to create token");
-      setStep("form");
+    } catch (error) {
+      toast.error(getErrorMessage(error), { id: toastId });
+      setIsCreatingToken(false);
     }
   };
 
   const totalChance = tiers.reduce((sum, t) => sum + t.chance, 0);
+  const isLoading = isCreatingToken || isPending;
 
   return (
     <Card>
@@ -265,31 +271,19 @@ export function CreateCampaignForm() {
             </div>
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
-              {error}
-            </div>
-          )}
-
           <Button
             type="submit"
             className="w-full"
             size="lg"
-            loading={isPending || step === "creating"}
-            disabled={!publicKey}
+            loading={isLoading}
+            disabled={!publicKey || isLoading}
           >
             {!publicKey
               ? "Connect Wallet"
-              : step === "creating"
-              ? "Creating Token & Campaign..."
-              : "Create Campaign"}
+              : isLoading
+                ? "Creating..."
+                : "Create Campaign"}
           </Button>
-
-          {step === "creating" && (
-            <p className="text-center text-zinc-500 text-sm">
-              Please approve the transactions in your wallet
-            </p>
-          )}
         </form>
       </CardContent>
     </Card>

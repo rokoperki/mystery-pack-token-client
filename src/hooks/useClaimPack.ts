@@ -8,6 +8,7 @@ import {
   getAssociatedTokenAddressSync,
 } from "@solana/spl-token";
 import { BN } from "@coral-xyz/anchor";
+import { toast } from "sonner";
 import { useProgram } from "./useProgram";
 import { campaignApi } from "@/lib/api";
 import { getReceiptPda } from "@/lib/program";
@@ -36,35 +37,48 @@ export function useClaimPack() {
         throw new Error("Wallet not connected");
       }
 
-      // 1. Get reveal data (now includes tier)
-      const { tokenAmount, salt, proof, tier } = await campaignApi.reveal(
-        campaignId,
-        packIndex,
-        publicKey.toBase58()
-      );
+      const toastId = toast.loading("Opening pack...");
 
-      // 2. Derive accounts
-      const campaign = new PublicKey(campaignPda);
-      const mint = new PublicKey(tokenMint);
-      const receiptPda = getReceiptPda(campaign, packIndex);
-      const buyerAta = getAssociatedTokenAddressSync(mint, publicKey);
+      try {
+        // 1. Get reveal data
+        toast.loading("Getting reveal data...", { id: toastId });
 
-      // 3. Send claim transaction
-      const signature = await program.methods
-        .claimPack(new BN(tokenAmount), salt, proof)
-        .accounts({
-          campaign,
-          receipt: receiptPda,
-          buyer: publicKey,
-          tokenMint: mint,
-          buyerTokenAccount: buyerAta,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        })
-        .rpc();
+        const { tokenAmount, salt, proof, tier } = await campaignApi.reveal(
+          campaignId,
+          packIndex,
+          publicKey.toBase58()
+        );
 
-      return { signature, tokenAmount, tier };
+        // 2. Derive accounts
+        const campaign = new PublicKey(campaignPda);
+        const mint = new PublicKey(tokenMint);
+        const receiptPda = getReceiptPda(campaign, packIndex);
+        const buyerAta = getAssociatedTokenAddressSync(mint, publicKey);
+
+        toast.loading("Waiting for approval...", { id: toastId });
+
+        // 3. Send claim transaction
+        const signature = await program.methods
+          .claimPack(new BN(tokenAmount), salt, proof)
+          .accounts({
+            campaign,
+            receipt: receiptPda,
+            buyer: publicKey,
+            tokenMint: mint,
+            buyerTokenAccount: buyerAta,
+            systemProgram: SystemProgram.programId,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          })
+          .rpc();
+
+        toast.success(`Claimed ${tokenAmount} tokens! 🎉`, { id: toastId });
+
+        return { signature, tokenAmount, tier };
+      } catch (error) {
+        toast.error(getErrorMessage(error), { id: toastId });
+        throw error;
+      }
     },
     onSuccess: () => {
       if (publicKey) {
@@ -74,4 +88,26 @@ export function useClaimPack() {
       }
     },
   });
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    if (error.message.includes("User rejected")) {
+      return "Transaction cancelled";
+    }
+    if (error.message.includes("insufficient")) {
+      return "Insufficient SOL balance";
+    }
+    if (error.message.includes("AlreadyClaimed")) {
+      return "Pack already claimed";
+    }
+    if (error.message.includes("NotPackOwner")) {
+      return "You don't own this pack";
+    }
+    if (error.message.includes("InvalidProof")) {
+      return "Invalid proof - please try again";
+    }
+    return error.message;
+  }
+  return "Failed to claim pack";
 }

@@ -105,7 +105,8 @@ export function CampaignDetails({ campaign, packsSold }: CampaignDetailsProps) {
         {/* Buy Button */}
         {campaign.status === "ACTIVE" &&
           campaign.publicKey &&
-          packsRemaining > 0 && (
+          packsRemaining > 0 &&
+          !isAuthority && (
             <BuyPackButton
               campaignPda={campaign.publicKey}
               packsSold={packsSold}

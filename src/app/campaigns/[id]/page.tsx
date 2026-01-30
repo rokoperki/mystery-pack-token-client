@@ -40,8 +40,6 @@ export default function CampaignPage() {
                 accountInfo.data
               );
               
-
-              console.log(decoded);
           setPacksSold(decoded.packs_sold);
         }
       } catch (err) {

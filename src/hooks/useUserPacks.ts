@@ -31,23 +31,13 @@ export function useUserPacks(campaignPublicKey?: string) {
         ],
       });
 
-      console.log(accounts);
-
       return accounts.map((account) => {
         const data = account.account.data;
         const campaign = new PublicKey(data.slice(1, 33));
         const buyer = new PublicKey(data.slice(33, 65));
         const packIndex = data.readUInt32LE(65);
         const isClaimed = data[69] === 1;
-
-        console.log({
-          campaignId: campaign.toBase58(),
-          campaignPublicKey: campaign.toBase58(),
-          packIndex,
-          buyer: buyer.toBase58(),
-          isClaimed,
-        });
-
+        
         return {
           campaignId: campaign.toBase58(),
           campaignPublicKey: campaign.toBase58(),
