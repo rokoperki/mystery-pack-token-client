@@ -1,11 +1,11 @@
 import axios from "axios";
 import {
-  Tier,
   PrepareResponse,
   ConfirmResponse,
   Campaign,
   RevealResponse,
   PrepareRequest,
+  PurchaseResponse,
 } from "@/types";
 import { API_URL } from "./contsants";
 
@@ -55,6 +55,17 @@ export const campaignApi = {
       {
         params: { wallet },
       }
+    );
+    return res.data;
+  },
+
+  purchase: async (
+    id: string,
+    data: { buyer: string; nonce: string; packIndex: number; signature: string }
+  ) => {
+    const res = await api.post<PurchaseResponse>(
+      `/campaigns/${id}/purchase`,
+      data
     );
     return res.data;
   },

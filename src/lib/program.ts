@@ -31,23 +31,37 @@ export function getVaultPda(campaignPda: PublicKey): PublicKey {
   return pda;
 }
 
-export function getReceiptPda(campaignPda: PublicKey, packIndex: number): PublicKey {
+export function getReceiptPda(campaignPda: PublicKey, buyer: PublicKey, nonce: bigint): PublicKey {
   const [pda] = PublicKey.findProgramAddressSync(
     [
       Buffer.from('receipt'),
       campaignPda.toBuffer(),
-      new Uint8Array(new Uint32Array([packIndex]).buffer),
+      buyer.toBuffer(),
+      bigintToLeBytes(nonce),
     ],
     PROGRAM_ID
   );
   return pda;
 }
 
-function bigintToLeBytes(value: bigint): Buffer {
-    const buffer = Buffer.alloc(8);
-    for (let i = 0; i < 8; i++) {
-      buffer[i] = Number(value & BigInt(0xff));
-      value >>= BigInt(8);
-    }
-    return buffer;
+export function getPurchaseRequestPda(campaignPda: PublicKey, buyer: PublicKey, nonce: bigint): PublicKey {
+  const [pda] = PublicKey.findProgramAddressSync(
+    [
+      Buffer.from('purchase_request'),
+      campaignPda.toBuffer(),
+      buyer.toBuffer(),
+      bigintToLeBytes(nonce),
+    ],
+    PROGRAM_ID
+  );
+  return pda;
+}
+
+export function bigintToLeBytes(value: bigint): Buffer {
+  const buffer = Buffer.alloc(8);
+  for (let i = 0; i < 8; i++) {
+    buffer[i] = Number(value & BigInt(0xff));
+    value >>= BigInt(8);
   }
+  return buffer;
+}

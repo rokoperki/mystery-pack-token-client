@@ -7,16 +7,16 @@ import { formatSol } from '@/lib/utils';
 
 interface BuyPackButtonProps {
   campaignPda: string;
-  packsSold: number;
+  campaignId: string;
   price: string;
 }
 
-export function BuyPackButton({ campaignPda, packsSold, price }: BuyPackButtonProps) {
+export function BuyPackButton({ campaignPda, campaignId, price }: BuyPackButtonProps) {
   const { publicKey } = useWallet();
   const { mutate: buyPack, isPending } = useBuyPack();
 
   const handleBuy = () => {
-    buyPack({ campaignPda, packsSold });
+    buyPack({ campaignPda, campaignId });
   };
 
   if (!publicKey) {

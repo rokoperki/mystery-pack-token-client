@@ -32,6 +32,7 @@ export interface RevealResponse {
   tokenAmount: string;
   salt: number[];
   proof: number[][];
+  tier: string;
 }
 
 export interface Pack {
@@ -40,6 +41,7 @@ export interface Pack {
   packIndex: number;
   buyer: string;
   isClaimed: boolean;
+  nonce: bigint;
 }
 
 export interface PrepareRequest {
@@ -48,13 +50,10 @@ export interface PrepareRequest {
   totalPacks: number;
   packPrice: number;
   tiers: Tier[];
-  seed: string; // Required
+  seed: string;
 }
 
-// types/index.ts
-export interface RevealResponse {
-    tokenAmount: string;
-    salt: number[];
-    proof: number[][];
-    tier: string; // Add tier
-  }
+export interface PurchaseResponse {
+  success: boolean;
+  purchaseId: string;
+}

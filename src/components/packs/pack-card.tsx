@@ -68,6 +68,7 @@ export function PackCard({ pack, campaignId, tokenMint }: PackCardProps) {
               campaignPda={pack.campaignPublicKey}
               tokenMint={tokenMint}
               packIndex={pack.packIndex}
+              nonce={pack.nonce}
               onSuccess={handleClaimSuccess}
             />
           )}

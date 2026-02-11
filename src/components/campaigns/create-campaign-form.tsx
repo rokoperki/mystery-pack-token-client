@@ -37,7 +37,7 @@ export function CreateCampaignForm() {
 
   const [tokenName, setTokenName] = useState("Mystery Token");
   const [tokenDecimals, setTokenDecimals] = useState("9");
-  const [totalPacks, setTotalPacks] = useState("100");
+  const [totalPacks, setTotalPacks] = useState("10");
   const [packPrice, setPackPrice] = useState("0.1");
   const [tiers, setTiers] = useState<Tier[]>(DEFAULT_TIERS);
   const [isCreatingToken, setIsCreatingToken] = useState(false);
@@ -203,6 +203,7 @@ export function CreateCampaignForm() {
                 label="Total Packs"
                 type="number"
                 min="1"
+                max="99"
                 value={totalPacks}
                 onChange={(e) => setTotalPacks(e.target.value)}
                 required

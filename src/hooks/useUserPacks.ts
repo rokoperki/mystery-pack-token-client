@@ -21,7 +21,7 @@ export function useUserPacks(campaignPublicKey?: string) {
 
       const accounts = await connection.getProgramAccounts(PROGRAM_ID, {
         filters: [
-          { dataSize: 77 },
+          { dataSize: 85 },
           {
             memcmp: {
               offset: 33,
@@ -37,13 +37,15 @@ export function useUserPacks(campaignPublicKey?: string) {
         const buyer = new PublicKey(data.slice(33, 65));
         const packIndex = data.readUInt32LE(65);
         const isClaimed = data[69] === 1;
-        
+        const nonce = data.readBigUInt64LE(70);
+
         return {
           campaignId: campaign.toBase58(),
           campaignPublicKey: campaign.toBase58(),
           packIndex,
           buyer: buyer.toBase58(),
           isClaimed,
+          nonce,
         };
       });
     },

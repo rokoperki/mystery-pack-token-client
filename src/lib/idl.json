@@ -1,5 +1,5 @@
 {
-  "address": "FqrPSmUCFpsdERKhasDTAePN4pTsoo5wrJwzdJZiVQpD",
+  "address": "AM6pwecsQXLf7UViTd6jHxAYDwSXSTNfqcZ5aSjXoKEn",
   "metadata": {
     "name": "mystery_pack_token",
     "version": "0.1.0",
@@ -10,7 +10,7 @@
     {
       "name": "claim_pack",
       "discriminator": [
-        2
+        3
       ],
       "accounts": [
         {
@@ -61,7 +61,11 @@
               },
               {
                 "kind": "account",
-                "path": "receipt.pack_index",
+                "path": "buyer"
+              },
+              {
+                "kind": "account",
+                "path": "receipt.nonce",
                 "account": "Receipt"
               }
             ]
@@ -175,7 +179,7 @@
     {
       "name": "close_campaign",
       "discriminator": [
-        4
+        5
       ],
       "accounts": [
         {
@@ -214,6 +218,125 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "commit_purchase",
+      "discriminator": [
+        1
+      ],
+      "accounts": [
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign.seed",
+                "account": "Campaign"
+              }
+            ]
+          }
+        },
+        {
+          "name": "buyer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "purchase_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  99,
+                  104,
+                  97,
+                  115,
+                  101,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "account",
+                "path": "buyer"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "randomness_account"
+        },
+        {
+          "name": "sol_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              }
+            ]
+          }
+        },
+        {
+          "name": "fee_recipient",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "nonce",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "initialize_campaign",
@@ -309,9 +432,9 @@
       ]
     },
     {
-      "name": "purchase_pack",
+      "name": "settle_randomness",
       "discriminator": [
-        1
+        2
       ],
       "accounts": [
         {
@@ -341,6 +464,51 @@
           }
         },
         {
+          "name": "purchase_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  99,
+                  104,
+                  97,
+                  115,
+                  101,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "account",
+                "path": "buyer"
+              },
+              {
+                "kind": "account",
+                "path": "purchase_request.nonce",
+                "account": "PurchaseRequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "randomness_account"
+        },
+        {
           "name": "buyer",
           "writable": true,
           "signer": true
@@ -368,30 +536,12 @@
               },
               {
                 "kind": "account",
-                "path": "campaign.packs_sold",
-                "account": "Campaign"
-              }
-            ]
-          }
-        },
-        {
-          "name": "sol_vault",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "path": "buyer"
               },
               {
                 "kind": "account",
-                "path": "campaign"
+                "path": "purchase_request.nonce",
+                "account": "PurchaseRequest"
               }
             ]
           }
@@ -406,7 +556,7 @@
     {
       "name": "withdraw_admin",
       "discriminator": [
-        3
+        4
       ],
       "accounts": [
         {
@@ -487,6 +637,12 @@
       ]
     },
     {
+      "name": "PurchaseRequest",
+      "discriminator": [
+        3
+      ]
+    },
+    {
       "name": "Receipt",
       "discriminator": [
         2
@@ -548,6 +704,31 @@
       "code": 6010,
       "name": "ProofTooLong",
       "msg": "Proof exceeds maximum length"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidRandomnessAccount",
+      "msg": "Invalid randomness account"
+    },
+    {
+      "code": 6012,
+      "name": "RandomnessNotReady",
+      "msg": "Randomness is not ready yet"
+    },
+    {
+      "code": 6013,
+      "name": "AlreadySettled",
+      "msg": "Pack has already been settled"
+    },
+    {
+      "code": 6014,
+      "name": "RandomnessSlotMismatch",
+      "msg": "Randomness slot does not match expected value"
+    },
+    {
+      "code": 6015,
+      "name": "NoPacksAvailable",
+      "msg": "No packs are available for purchase"
     }
   ],
   "types": [
@@ -590,6 +771,19 @@
             }
           },
           {
+            "name": "packs_committed",
+            "type": "u32"
+          },
+          {
+            "name": "available_bitmap",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
             "name": "is_active",
             "type": "bool"
           },
@@ -599,6 +793,44 @@
           },
           {
             "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PurchaseRequest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "buyer",
+            "type": "pubkey"
+          },
+          {
+            "name": "commit_slot",
+            "type": "u64"
+          },
+          {
+            "name": "randomness_account",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "pack_index",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "bump",
             "type": "u8"
           }
         ]
@@ -624,6 +856,10 @@
           {
             "name": "is_claimed",
             "type": "bool"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
           }
         ]
       }

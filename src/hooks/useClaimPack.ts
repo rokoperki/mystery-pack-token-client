@@ -19,6 +19,7 @@ interface ClaimPackParams {
   campaignPda: string;
   tokenMint: string;
   packIndex: number;
+  nonce: bigint;
 }
 
 export function useClaimPack() {
@@ -32,6 +33,7 @@ export function useClaimPack() {
       campaignPda,
       tokenMint,
       packIndex,
+      nonce,
     }: ClaimPackParams) => {
       if (!publicKey || !program) {
         throw new Error("Wallet not connected");
@@ -52,7 +54,7 @@ export function useClaimPack() {
         // 2. Derive accounts
         const campaign = new PublicKey(campaignPda);
         const mint = new PublicKey(tokenMint);
-        const receiptPda = getReceiptPda(campaign, packIndex);
+        const receiptPda = getReceiptPda(campaign, publicKey, nonce);
         const buyerAta = getAssociatedTokenAddressSync(mint, publicKey);
 
         toast.loading("Waiting for approval...", { id: toastId });

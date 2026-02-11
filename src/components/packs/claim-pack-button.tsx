@@ -9,6 +9,7 @@ interface ClaimPackButtonProps {
   campaignPda: string;
   tokenMint: string;
   packIndex: number;
+  nonce: bigint;
   onSuccess?: (amount: string, tier?: string) => void;
 }
 
@@ -17,13 +18,14 @@ export function ClaimPackButton({
   campaignPda,
   tokenMint,
   packIndex,
+  nonce,
   onSuccess,
 }: ClaimPackButtonProps) {
   const { mutate: claimPack, isPending } = useClaimPack();
 
   const handleClaim = () => {
     claimPack(
-      { campaignId, campaignPda, tokenMint, packIndex },
+      { campaignId, campaignPda, tokenMint, packIndex, nonce },
       {
         onSuccess: ({ tokenAmount, tier }) => {
           onSuccess?.(tokenAmount, tier);

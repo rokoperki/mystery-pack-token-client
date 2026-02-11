@@ -109,7 +109,7 @@ export function CampaignDetails({ campaign, packsSold }: CampaignDetailsProps) {
           !isAuthority && (
             <BuyPackButton
               campaignPda={campaign.publicKey}
-              packsSold={packsSold}
+              campaignId={campaign.id}
               price={campaign.packPrice}
             />
           )}
