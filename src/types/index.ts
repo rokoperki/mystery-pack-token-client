@@ -21,6 +21,7 @@ export interface PrepareResponse {
   id: string;
   seed: string;
   merkleRoot: number[];
+  transaction: string;
 }
 
 export interface ConfirmResponse {

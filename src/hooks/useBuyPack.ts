@@ -1,4 +1,3 @@
-// hooks/useBuyPack.ts
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   useAnchorWallet,
@@ -10,6 +9,7 @@ import {
   PublicKey,
   SystemProgram,
   Transaction,
+  TransactionInstruction,
 } from "@solana/web3.js";
 import { AnchorProvider, BN, Program, Idl } from "@coral-xyz/anchor";
 import {
@@ -82,7 +82,7 @@ export function useBuyPack() {
 
         toast.loading("Approve commit transaction...", { id: toastId });
 
-        const commitIx = await randomness.commitIx(ON_DEMAND_DEVNET_QUEUE);
+        const commitIx = await retryCommit(randomness, ON_DEMAND_DEVNET_QUEUE);
 
         const purchaseRequestPda = getPurchaseRequestPda(
           campaign,
@@ -124,7 +124,7 @@ export function useBuyPack() {
 
         toast.loading("Approve settle transaction...", { id: toastId });
 
-        const revealIx = await randomness.revealIx();
+        const revealIx = await retryReveal(randomness);
         const receiptPda = getReceiptPda(campaign, publicKey, nonce);
 
         const settleIx = await program.methods
@@ -186,6 +186,11 @@ export function useBuyPack() {
             lastError = null;
             break;
           } catch (err) {
+            const axiosErr = err as { response?: { data?: unknown }; message?: string };
+            console.error(
+              `Backend purchase attempt ${attempt + 1} failed:`,
+              axiosErr?.response?.data || axiosErr?.message
+            );
             lastError = err;
             if (attempt < 2) {
               await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -214,6 +219,41 @@ export function useBuyPack() {
       }
     },
   });
+}
+
+async function retryCommit(
+  randomness: Randomness,
+  queue: PublicKey,
+  maxRetries = 3
+): Promise<TransactionInstruction> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Commit attempt ${attempt}/${maxRetries}...`);
+      return await randomness.commitIx(queue);
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      console.log(`Commit failed, retrying in 2s...`);
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  throw new Error("All commit attempts failed");
+}
+
+async function retryReveal(
+  randomness: Randomness,
+  maxRetries = 5
+): Promise<TransactionInstruction> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Reveal attempt ${attempt}/${maxRetries}...`);
+      return await randomness.revealIx();
+    } catch (error) {
+      if (attempt === maxRetries) throw error;
+      console.log(`Reveal failed, retrying in 2s...`);
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  throw new Error("All reveal attempts failed");
 }
 
 function getErrorMessage(error: unknown): string {

@@ -203,7 +203,7 @@ export function CreateCampaignForm() {
                 label="Total Packs"
                 type="number"
                 min="1"
-                max="99"
+                max="100"
                 value={totalPacks}
                 onChange={(e) => setTotalPacks(e.target.value)}
                 required
@@ -212,6 +212,7 @@ export function CreateCampaignForm() {
                 label="Price (SOL)"
                 type="number"
                 min="0.001"
+                max="1"
                 step="0.001"
                 value={packPrice}
                 onChange={(e) => setPackPrice(e.target.value)}
